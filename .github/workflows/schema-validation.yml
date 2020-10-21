@@ -22,4 +22,4 @@ jobs:
         pip install pykwalify
     - name: Validate with pykwalify
       run: |
-        for f in *.yaml; do pykwalify -s schemas/cve.yml -d $f || exit 1; done
+        for f in cves/*.yaml; do pykwalify -s schemas/cve.yml -d $f || exit 1; done
