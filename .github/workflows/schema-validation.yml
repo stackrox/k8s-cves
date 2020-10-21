@@ -1,5 +1,5 @@
 # This workflow will validate the CVE yaml files with pykwalify.
-name: K8s CVEs
+name: CVE YAML Validation
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  validate:
 
     runs-on: ubuntu-latest
 
