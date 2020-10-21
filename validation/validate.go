@@ -90,7 +90,7 @@ func validateCVSS(cvss *cvssSchema) error {
 		}
 
 		if nvd.ScoreV2 > 0.0 && !cvss2Pattern.MatchString(nvd.VectorV2) {
-			return errors.Errorf("nvd.vectorV2 must adhere to pattern %q: %s", cvss3Pattern.String(), nvd.VectorV3)
+			return errors.Errorf("nvd.vectorV2 must adhere to pattern %q: %s", cvss2Pattern.String(), nvd.VectorV2)
 		}
 
 		if nvd.ScoreV3 > 0.0 && !cvss3Pattern.MatchString(nvd.VectorV3) {
