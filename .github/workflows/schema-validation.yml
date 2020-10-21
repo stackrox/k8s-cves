@@ -1,0 +1,27 @@
+# This workflow will validate the CVE yaml files with pykwalify.
+name: K8s CVEs
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pykwalify
+    - name: Validate with pykwalify
+      run: |
+        for f in *.yaml; do pykwalify -s schemas/cve.yml -d $f || exit 1; done

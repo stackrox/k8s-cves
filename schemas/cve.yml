@@ -1,0 +1,53 @@
+type: map
+mapping:
+  "cve":
+    type: str
+    required: yes
+    pattern: CVE-\d+-\d+
+  "url":
+    type: str
+    required: true
+    pattern: https?://
+  "description":
+    type: str
+    required: true
+  "components":
+    type: seq
+    sequence:
+      - type: str
+  "cvss":
+    type: map
+    required: yes
+    mapping:
+      "nvd":
+        type: map
+        mapping:
+          "scoreV2":
+            type: float
+          "vectorV2":
+            type: str
+            pattern: AV:[LAN]/AC:[HML]/Au:[MSN]/C:[NPC]/I:[NPC]/A:[NPC]
+          "scoreV3":
+            type: float
+          "vectorV3":
+            type: str
+            pattern: CVSS:3.[01]/AV:[NALP]/AC:[LH]/PR:[NLH]/UI:[NR]/S:[UC]/C:[NLH]/I:[NLH]/A:[NLH]
+      "kubernetes":
+        type: map
+        mapping:
+          "scoreV3":
+            type: float
+            required: yes
+          "vectorV3":
+            type: str
+            pattern: CVSS:3.[01]/AV:[NALP]/AC:[LH]/PR:[NLH]/UI:[NR]/S:[UC]/C:[NLH]/I:[NLH]/A:[NLH]
+            required: yes
+  "affected":
+    type: seq
+    required: yes
+    sequence:
+      - type: str
+  "fixedIn":
+    type: seq
+    sequence:
+      - type: str
