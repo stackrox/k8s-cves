@@ -15,6 +15,7 @@ mapping:
     type: seq
     sequence:
       - type: str
+        unique: yes
   "cvss":
     type: map
     required: yes
@@ -24,13 +25,17 @@ mapping:
         mapping:
           "scoreV2":
             type: float
+            unique: yes
           "vectorV2":
             type: str
+            unique: yes
             pattern: AV:[LAN]/AC:[HML]/Au:[MSN]/C:[NPC]/I:[NPC]/A:[NPC]
           "scoreV3":
             type: float
+            unique: yes
           "vectorV3":
             type: str
+            unique: yes
             pattern: CVSS:3.[01]/AV:[NALP]/AC:[LH]/PR:[NLH]/UI:[NR]/S:[UC]/C:[NLH]/I:[NLH]/A:[NLH]
       "kubernetes":
         type: map
@@ -38,16 +43,20 @@ mapping:
           "scoreV3":
             type: float
             required: yes
+            unique: yes
           "vectorV3":
             type: str
-            pattern: CVSS:3.[01]/AV:[NALP]/AC:[LH]/PR:[NLH]/UI:[NR]/S:[UC]/C:[NLH]/I:[NLH]/A:[NLH]
             required: yes
+            unique: yes
+            pattern: CVSS:3.[01]/AV:[NALP]/AC:[LH]/PR:[NLH]/UI:[NR]/S:[UC]/C:[NLH]/I:[NLH]/A:[NLH]
   "affected":
     type: seq
     required: yes
     sequence:
       - type: str
+        unique: yes
   "fixedIn":
     type: seq
     sequence:
       - type: str
+        unique: yes
