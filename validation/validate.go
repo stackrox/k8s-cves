@@ -4,6 +4,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/facebookincubator/nvdtools/cvss2"
+	"github.com/facebookincubator/nvdtools/cvss3"
 	"github.com/hashicorp/go-version"
 	"github.com/pkg/errors"
 )
@@ -11,8 +13,6 @@ import (
 var (
 	cvePattern   = regexp.MustCompile(`^CVE-\d+-\d+$`)
 	urlPattern   = regexp.MustCompile(`^https?://`)
-	cvss2Pattern = regexp.MustCompile(`^AV:[LAN]/AC:[HML]/Au:[MSN]/C:[NPC]/I:[NPC]/A:[NPC]$`)
-	cvss3Pattern = regexp.MustCompile(`^CVSS:3.[01]/AV:[NALP]/AC:[LH]/PR:[NLH]/UI:[NR]/S:[UC]/C:[NLH]/I:[NLH]/A:[NLH]$`)
 )
 
 func validate(fileName string, cveFile *cveSchema) error {
@@ -89,12 +89,16 @@ func validateCVSS(cvss *cvssSchema) error {
 			return errors.New("nvd.scoreV2 and nvd.scoreV3 must be greater than 0, if defined")
 		}
 
-		if nvd.ScoreV2 > 0.0 && !cvss2Pattern.MatchString(nvd.VectorV2) {
-			return errors.Errorf("nvd.vectorV2 must adhere to pattern %q: %s", cvss2Pattern.String(), nvd.VectorV2)
+		if nvd.ScoreV2 > 0.0 {
+			if err := validateCVSS2(nvd.ScoreV2, nvd.VectorV2); err != nil {
+				return errors.Wrap(err, "Invalid nvd CVSS2")
+			}
 		}
 
-		if nvd.ScoreV3 > 0.0 && !cvss3Pattern.MatchString(nvd.VectorV3) {
-			return errors.Errorf("nvd.vectorV3 must adhere to pattern %q: %s", cvss3Pattern.String(), nvd.VectorV3)
+		if nvd.ScoreV3 > 0.0 {
+			if err := validateCVSS3(nvd.ScoreV3, nvd.VectorV3); err != nil {
+				return errors.Wrap(err, "Invalid nvd CVSS3")
+			}
 		}
 	}
 
@@ -105,8 +109,8 @@ func validateCVSS(cvss *cvssSchema) error {
 			return errors.New("kubernetes.scoreV3 must be defined and greater than 0.0")
 		}
 
-		if !cvss3Pattern.MatchString(kubernetes.VectorV3) {
-			return errors.Errorf("kubernetes.vectorV3 must adhere to pattern %q: %s", cvss3Pattern.String(), kubernetes.VectorV3)
+		if err := validateCVSS3(kubernetes.ScoreV3, kubernetes.VectorV3); err != nil {
+			return errors.Wrap(err, "Invalid kubernetes CVSS3")
 		}
 	}
 
@@ -117,12 +121,57 @@ func validateVersionConstraints(constraints []string) error {
 	if len(constraints) == 0 {
 		return errors.New("Constraints must be defined")
 	}
+
+	constraintSet := make(map[string]bool)
 	for _, constraint := range constraints {
+		trimmed := strings.TrimSpace(constraint)
+		if len(trimmed) == 0 {
+			return errors.New("Constraints may not be blank")
+		}
+		if constraintSet[trimmed] {
+			return errors.Errorf("Constraints may not be repeated: %s", trimmed)
+		}
+		constraintSet[trimmed] = true
+
 		// It would be nice if we could ensure all constraints are non-overlapping,
 		// but it doesn't seem very straightforward at the moment.
-		if _, err := version.NewConstraint(constraint); err != nil {
+		if _, err := version.NewConstraint(trimmed); err != nil {
 			return errors.Wrapf(err, "Invalid constraint: %s", constraint)
 		}
+	}
+
+	return nil
+}
+
+func validateCVSS2(score float64, vector string) error {
+	v, err := cvss2.VectorFromString(vector)
+	if err != nil {
+		return err
+	}
+	if err := v.Validate(); err != nil {
+		return err
+	}
+
+	calculatedScore := v.Score()
+	if score != calculatedScore {
+		return errors.Errorf("CVSS2 score differs from calculated vector score: %f != %f", score, calculatedScore)
+	}
+
+	return nil
+}
+
+func validateCVSS3(score float64, vector string) error {
+	v, err := cvss3.VectorFromString(vector)
+	if err != nil {
+		return err
+	}
+	if err := v.Validate(); err != nil {
+		return err
+	}
+
+	calculatedScore := v.Score()
+	if score != calculatedScore {
+		return errors.Errorf("CVSS3 score differs from calculated vector score: %f != %f", score, calculatedScore)
 	}
 
 	return nil
