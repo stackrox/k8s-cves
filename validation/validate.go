@@ -11,8 +11,9 @@ import (
 )
 
 var (
-	cvePattern   = regexp.MustCompile(`^CVE-\d+-\d+$`)
-	urlPattern   = regexp.MustCompile(`^https?://`)
+	cvePattern      = regexp.MustCompile(`^CVE-\d+-\d+$`)
+	urlPattern      = regexp.MustCompile(`^https?://`)
+	issueURLPattern = regexp.MustCompile(`^https://github.com/kubernetes/kubernetes/(?:issues|pull)/\d+$`)
 )
 
 func validate(fileName string, cveFile *cveSchema) error {
@@ -26,9 +27,19 @@ func validate(fileName string, cveFile *cveSchema) error {
 		return errors.Errorf("File name must match CVE (%q)", cveFile.CVE)
 	}
 
+	// Validate URLs.
+	if cveFile.URL == "" && cveFile.IssueURL == "" {
+		return errors.Errorf("At least one of url or issueUrl must be defined")
+	}
+
 	// Validate URL.
-	if !urlPattern.MatchString(cveFile.URL) {
+	if cveFile.URL != "" && !urlPattern.MatchString(cveFile.URL) {
 		return errors.Errorf("URL must adhere to the pattern %q: %s", urlPattern.String(), cveFile.URL)
+	}
+
+	// Validate Issue URL.
+	if cveFile.IssueURL != "" && !issueURLPattern.MatchString(cveFile.IssueURL) {
+		return errors.Errorf("IssueURL must adhere to the pattern %q: %s", issueURLPattern.String(), cveFile.IssueURL)
 	}
 
 	// Validate description.

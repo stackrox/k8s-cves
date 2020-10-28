@@ -3,6 +3,7 @@ package main
 type cveSchema struct {
 	CVE         string      `json:"cve"`
 	URL         string      `json:"url"`
+	IssueURL    string      `json:"issueUrl"`
 	Description string      `json:"description"`
 	Components  []string    `json:"components"`
 	CVSS        *cvssSchema `json:"cvss"`
