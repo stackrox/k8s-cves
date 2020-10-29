@@ -2,8 +2,7 @@
 
 This repository is meant to be a single source of truth for
 Kubernetes-related CVEs. The data gathered here is meant to be as up-to-date
-as possible (ideally within minutes of a new CVE release).
-Currently, the data comes from a combination of NVD and Kubernetes GitHub issues.
+as possible. Currently, the data comes from a combination of NVD and Kubernetes GitHub issues.
 
 Though this repository is meant to be a single source of truth,
 there may be mistakes. We try to keep everything as accurate and up-to-date

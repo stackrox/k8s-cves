@@ -24,12 +24,12 @@ func validate(fileName string, cveFile *cveSchema) error {
 
 	// Validate file name.
 	if !strings.HasSuffix(fileName, cveFile.CVE + ".yaml") {
-		return errors.Errorf("File name must match CVE (%q)", cveFile.CVE)
+		return errors.Errorf("file name must match CVE (%q)", cveFile.CVE)
 	}
 
 	// Validate URLs.
 	if cveFile.URL == "" && cveFile.IssueURL == "" {
-		return errors.Errorf("At least one of url or issueUrl must be defined")
+		return errors.New("at least one of url or issueUrl must be defined")
 	}
 
 	// Validate URL.
@@ -39,12 +39,12 @@ func validate(fileName string, cveFile *cveSchema) error {
 
 	// Validate Issue URL.
 	if cveFile.IssueURL != "" && !issueURLPattern.MatchString(cveFile.IssueURL) {
-		return errors.Errorf("IssueURL must adhere to the pattern %q: %s", issueURLPattern.String(), cveFile.IssueURL)
+		return errors.Errorf("issueURL must adhere to the pattern %q: %s", issueURLPattern.String(), cveFile.IssueURL)
 	}
 
 	// Validate description.
 	if len(strings.TrimSpace(cveFile.Description)) == 0 {
-		return errors.New("Description must be defined")
+		return errors.New("description must be defined")
 	}
 
 	// Validate components.
@@ -53,10 +53,10 @@ func validate(fileName string, cveFile *cveSchema) error {
 		for _, component := range cveFile.Components {
 			trimmed := strings.TrimSpace(component)
 			if len(trimmed) == 0 {
-				return errors.New("Components may not be blank")
+				return errors.New("components may not be blank")
 			}
 			if componentSet[trimmed] {
-				return errors.Errorf("Components may not be repeated: %s", trimmed)
+				return errors.Errorf("components may not be repeated: %s", trimmed)
 			}
 			componentSet[trimmed] = true
 		}
@@ -64,17 +64,17 @@ func validate(fileName string, cveFile *cveSchema) error {
 
 	// Validate CVSS.
 	if err := validateCVSS(cveFile.CVSS); err != nil {
-		return errors.Wrap(err, "Invalid CVSS field")
+		return errors.Wrap(err, "invalid CVSS field")
 	}
 
 	// Validate affected.
 	if err := validateVersionConstraints(cveFile.Affected); err != nil {
-		return errors.Wrap(err, "Invalid affected field")
+		return errors.Wrap(err, "invalid affected field")
 	}
 
 	// Validate fixedIn.
 	if err := validateVersionConstraints(cveFile.FixedIn); err != nil {
-		return errors.Wrap(err, "Invalid fixedIn field")
+		return errors.Wrap(err, "invalid fixedIn field")
 	}
 
 	return nil
@@ -86,14 +86,12 @@ func validateCVSS(cvss *cvssSchema) error {
 	}
 
 	if cvss.NVD == nil && cvss.Kubernetes == nil {
-		return errors.New("At least one of 'nvd' or 'kubernetes' must be defined")
+		return errors.New("at least one of 'nvd' or 'kubernetes' must be defined")
 	}
 
-	if cvss.NVD != nil {
-		nvd := cvss.NVD
-
+	if nvd := cvss.NVD; nvd != nil {
 		if nvd.ScoreV2 <= 0.0 && nvd.ScoreV3 <= 0.0 {
-			return errors.New("At least one of nvd.scoreV2 or nvd.scoreV3 must be defined and greater than 0.0")
+			return errors.New("at least one of nvd.scoreV2 or nvd.scoreV3 must be defined and greater than 0.0")
 		}
 
 		if nvd.ScoreV2 < 0.0 || nvd.ScoreV3 < 0.0 {
@@ -102,26 +100,24 @@ func validateCVSS(cvss *cvssSchema) error {
 
 		if nvd.ScoreV2 > 0.0 {
 			if err := validateCVSS2(nvd.ScoreV2, nvd.VectorV2); err != nil {
-				return errors.Wrap(err, "Invalid nvd CVSS2")
+				return errors.Wrap(err, "invalid nvd CVSS2")
 			}
 		}
 
 		if nvd.ScoreV3 > 0.0 {
 			if err := validateCVSS3(nvd.ScoreV3, nvd.VectorV3); err != nil {
-				return errors.Wrap(err, "Invalid nvd CVSS3")
+				return errors.Wrap(err, "invalid nvd CVSS3")
 			}
 		}
 	}
 
-	if cvss.Kubernetes != nil {
-		kubernetes := cvss.Kubernetes
-
+	if kubernetes := cvss.Kubernetes; kubernetes != nil {
 		if kubernetes.ScoreV3 <= 0.0 {
 			return errors.New("kubernetes.scoreV3 must be defined and greater than 0.0")
 		}
 
 		if err := validateCVSS3(kubernetes.ScoreV3, kubernetes.VectorV3); err != nil {
-			return errors.Wrap(err, "Invalid kubernetes CVSS3")
+			return errors.Wrap(err, "invalid kubernetes CVSS3")
 		}
 	}
 
@@ -130,24 +126,24 @@ func validateCVSS(cvss *cvssSchema) error {
 
 func validateVersionConstraints(constraints []string) error {
 	if len(constraints) == 0 {
-		return errors.New("Constraints must be defined")
+		return errors.New("constraints must be defined")
 	}
 
 	constraintSet := make(map[string]bool)
 	for _, constraint := range constraints {
 		trimmed := strings.TrimSpace(constraint)
 		if len(trimmed) == 0 {
-			return errors.New("Constraints may not be blank")
+			return errors.New("constraints may not be blank")
 		}
 		if constraintSet[trimmed] {
-			return errors.Errorf("Constraints may not be repeated: %s", trimmed)
+			return errors.Errorf("constraints may not be repeated: %s", trimmed)
 		}
 		constraintSet[trimmed] = true
 
 		// It would be nice if we could ensure all constraints are non-overlapping,
 		// but it doesn't seem very straightforward at the moment.
 		if _, err := version.NewConstraint(trimmed); err != nil {
-			return errors.Wrapf(err, "Invalid constraint: %s", constraint)
+			return errors.Wrapf(err, "invalid constraint: %s", constraint)
 		}
 	}
 
@@ -165,7 +161,7 @@ func validateCVSS2(score float64, vector string) error {
 
 	calculatedScore := v.Score()
 	if score != calculatedScore {
-		return errors.Errorf("CVSS2 score differs from calculated vector score: %f != %f", score, calculatedScore)
+		return errors.Errorf("CVSS2 score differs from calculated vector score: %f != %0.1f", score, calculatedScore)
 	}
 
 	return nil
@@ -182,7 +178,7 @@ func validateCVSS3(score float64, vector string) error {
 
 	calculatedScore := v.Score()
 	if score != calculatedScore {
-		return errors.Errorf("CVSS3 score differs from calculated vector score: %f != %f", score, calculatedScore)
+		return errors.Errorf("CVSS3 score differs from calculated vector score: %f != %0.1f", score, calculatedScore)
 	}
 
 	return nil

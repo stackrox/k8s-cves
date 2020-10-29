@@ -33,12 +33,12 @@ func main() {
 			return err
 		}
 
-		cveFile := &cveSchema{}
-		if err := yaml.Unmarshal(bytes, cveFile); err != nil {
-			return errors.Wrapf(err, "Unable to unmarshal %s", path)
+		var cveFile cveSchema
+		if err := yaml.Unmarshal(bytes, &cveFile); err != nil {
+			return errors.Wrapf(err, "unable to unmarshal %s", path)
 		}
 
-		if err := validate(path, cveFile); err != nil {
+		if err := validate(path, &cveFile); err != nil {
 			return errors.Wrapf(err, "CVE file %s is invalid", path)
 		}
 
