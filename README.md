@@ -18,6 +18,11 @@ cve: 'CVEID (ex: CVE-2019-16276)'
 url: Alternate URL for the vulnerability. This will typically be a link to NVD.
 issueUrl: URL to the relevant Issue/Pull Request in the Kubernetes GitHub repository
 description: CVE description
+components:
+  # list of affected components
+  # ex:
+  - kubelet
+  - kube-proxy
 cvss:
   nvd:
     scoreV2: NVD V2 score
