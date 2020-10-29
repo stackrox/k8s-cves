@@ -15,7 +15,11 @@ const (
 )
 
 func main() {
-	err := filepath.Walk(cvesPath, func(path string, _ os.FileInfo, _ error) error {
+	err := filepath.Walk(cvesPath, func(path string, _ os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
 		if path == cvesPath {
 			return nil
 		}
