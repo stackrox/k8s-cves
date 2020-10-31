@@ -20,5 +20,8 @@ jobs:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
 
+      - name: Format Go code
+        run: go fmt ./validation
+
       - name: Validate CVEs
         run: go run -v ./validation
