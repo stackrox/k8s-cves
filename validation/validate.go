@@ -14,6 +14,18 @@ var (
 	cvePattern      = regexp.MustCompile(`^CVE-\d+-\d+$`)
 	urlPattern      = regexp.MustCompile(`^https?://`)
 	issueURLPattern = regexp.MustCompile(`^https://github.com/kubernetes/kubernetes/(?:issues|pull)/\d+$`)
+
+	validComponents = map[string]bool{
+		"client-go":               true,
+		"kube-aggregator":         true,
+		"kube-apiserver":          true,
+		"kube-controller-manager": true,
+		"kube-dns":                true,
+		"kube-proxy":              true,
+		"kube-scheduler":          true,
+		"kubectl":                 true,
+		"kubelet":                 true,
+	}
 )
 
 func validate(fileName string, cveFile *cveSchema) error {
@@ -23,7 +35,7 @@ func validate(fileName string, cveFile *cveSchema) error {
 	}
 
 	// Validate file name.
-	if !strings.HasSuffix(fileName, cveFile.CVE + ".yaml") {
+	if !strings.HasSuffix(fileName, cveFile.CVE+".yaml") {
 		return errors.Errorf("file name must match CVE (%q)", cveFile.CVE)
 	}
 
@@ -48,18 +60,8 @@ func validate(fileName string, cveFile *cveSchema) error {
 	}
 
 	// Validate components.
-	if len(cveFile.Components) > 0 {
-		componentSet := make(map[string]bool)
-		for _, component := range cveFile.Components {
-			trimmed := strings.TrimSpace(component)
-			if len(trimmed) == 0 {
-				return errors.New("components may not be blank")
-			}
-			if componentSet[trimmed] {
-				return errors.Errorf("components may not be repeated: %s", trimmed)
-			}
-			componentSet[trimmed] = true
-		}
+	if err := validateComponents(cveFile.Components); err != nil {
+		return errors.Wrap(err, "invalid components field")
 	}
 
 	// Validate CVSS.
@@ -75,6 +77,35 @@ func validate(fileName string, cveFile *cveSchema) error {
 	// Validate fixedIn.
 	if err := validateVersionConstraints(cveFile.FixedIn); err != nil {
 		return errors.Wrap(err, "invalid fixedIn field")
+	}
+
+	return nil
+}
+
+func validateComponents(components []string) error {
+	if len(components) > 0 {
+		componentSet := make(map[string]bool)
+		for _, component := range components {
+			trimmed := strings.TrimSpace(component)
+			if len(trimmed) == 0 {
+				return errors.New("components may not be blank")
+			}
+
+			if !validComponents[trimmed] {
+				validComponentsKeys := make([]string, 0, len(validComponents))
+				for componentKey := range validComponents {
+					validComponentsKeys = append(validComponentsKeys, componentKey)
+				}
+
+				return errors.Errorf("component is not valid (%v): %s", validComponentsKeys, trimmed)
+			}
+
+			if componentSet[trimmed] {
+				return errors.Errorf("components may not be repeated: %s", trimmed)
+			}
+
+			componentSet[trimmed] = true
+		}
 	}
 
 	return nil
