@@ -1,4 +1,4 @@
-package main
+package validation
 
 import (
 	"regexp"
@@ -28,7 +28,8 @@ var (
 	}
 )
 
-func validate(fileName string, cveFile *cveSchema) error {
+// Validate ensures a given CVE file is valid.
+func Validate(fileName string, cveFile *CVESchema) error {
 	// Validate CVE.
 	if !cvePattern.MatchString(cveFile.CVE) {
 		return errors.Errorf("CVE must adhere to the pattern %q: %s", cvePattern.String(), cveFile.CVE)
@@ -111,7 +112,7 @@ func validateComponents(components []string) error {
 	return nil
 }
 
-func validateCVSS(cvss *cvssSchema) error {
+func validateCVSS(cvss *CVSSSchema) error {
 	if cvss == nil {
 		return errors.New("CVSS must be defined")
 	}

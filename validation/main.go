@@ -8,6 +8,7 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
+	"github.com/stackrox/k8s-cves/pkg/validation"
 )
 
 const (
@@ -33,12 +34,12 @@ func main() {
 			return err
 		}
 
-		var cveFile cveSchema
+		var cveFile validation.CVESchema
 		if err := yaml.Unmarshal(bytes, &cveFile); err != nil {
 			return errors.Wrapf(err, "unable to unmarshal %s", path)
 		}
 
-		if err := validate(path, &cveFile); err != nil {
+		if err := validation.Validate(path, &cveFile); err != nil {
 			return errors.Wrapf(err, "CVE file %s is invalid", path)
 		}
 
