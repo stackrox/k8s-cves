@@ -9,7 +9,7 @@ type CVESchema struct {
 	Components  []string    `json:"components"`
 	CVSS        *CVSSSchema `json:"cvss"`
 	Affected    []string    `json:"affected"`
-	FixedIn     []string    `json:"fixedIn"`
+	FixedBy     []string    `json:"fixedBy"`
 }
 
 // CVSSSchema is the schema for the CVSS section of the CVE file.

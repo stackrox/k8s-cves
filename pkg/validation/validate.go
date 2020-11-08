@@ -76,7 +76,7 @@ func Validate(fileName string, cveFile *CVESchema) error {
 	}
 
 	// Validate fixedIn.
-	if err := validateVersionConstraints(cveFile.FixedIn); err != nil {
+	if err := validateVersions(cveFile.FixedBy); err != nil {
 		return errors.Wrap(err, "invalid fixedIn field")
 	}
 
@@ -156,32 +156,6 @@ func validateCVSS(cvss *CVSSSchema) error {
 	return nil
 }
 
-func validateVersionConstraints(constraints []string) error {
-	if len(constraints) == 0 {
-		return errors.New("constraints must be defined")
-	}
-
-	constraintSet := make(map[string]bool)
-	for _, constraint := range constraints {
-		trimmed := strings.TrimSpace(constraint)
-		if len(trimmed) == 0 {
-			return errors.New("constraints may not be blank")
-		}
-		if constraintSet[trimmed] {
-			return errors.Errorf("constraints may not be repeated: %s", trimmed)
-		}
-		constraintSet[trimmed] = true
-
-		// It would be nice if we could ensure all constraints are non-overlapping,
-		// but it doesn't seem very straightforward at the moment.
-		if _, err := version.NewConstraint(trimmed); err != nil {
-			return errors.Wrapf(err, "invalid constraint: %s", constraint)
-		}
-	}
-
-	return nil
-}
-
 func validateCVSS2(score float64, vector string) error {
 	v, err := cvss2.VectorFromString(vector)
 	if err != nil {
@@ -211,6 +185,59 @@ func validateCVSS3(score float64, vector string) error {
 	calculatedScore := v.Score()
 	if score != calculatedScore {
 		return errors.Errorf("CVSS3 score differs from calculated vector score: %f != %0.1f", score, calculatedScore)
+	}
+
+	return nil
+}
+
+func validateVersionConstraints(constraints []string) error {
+	if len(constraints) == 0 {
+		return errors.New("constraints must be defined")
+	}
+
+	constraintSet := make(map[string]bool)
+	for _, constraint := range constraints {
+		trimmed := strings.TrimSpace(constraint)
+		if len(trimmed) == 0 {
+			return errors.New("constraints may not be blank")
+		}
+		if constraintSet[trimmed] {
+			return errors.Errorf("constraints may not be repeated: %s", trimmed)
+		}
+		constraintSet[trimmed] = true
+
+		// It would be nice if we could ensure all constraints are non-overlapping,
+		// but it doesn't seem very straightforward at the moment.
+		if _, err := version.NewConstraint(trimmed); err != nil {
+			return errors.Wrapf(err, "invalid constraint: %s", trimmed)
+		}
+	}
+
+	return nil
+}
+
+func validateVersions(versions []string) error {
+	if len(versions) == 0 {
+		return errors.New("versions must be defined")
+	}
+
+	var prev *version.Version
+	for _, str := range versions {
+		trimmed := strings.TrimSpace(str)
+		if len(trimmed) == 0 {
+			return errors.New("versions may not be blank")
+		}
+
+		v, err := version.NewVersion(trimmed)
+		if err != nil {
+			return errors.Wrapf(err, "invalid version: %s", trimmed)
+		}
+
+		if prev != nil && v.LessThanOrEqual(prev) {
+			return errors.Errorf("versions must be unique and sorted in increasing order: %s < %s", v.String(), prev.String())
+		}
+
+		prev = v
 	}
 
 	return nil
