@@ -71,13 +71,8 @@ func Validate(fileName string, cveFile *CVESchema) error {
 	}
 
 	// Validate affected.
-	if err := validateVersionConstraints(cveFile.Affected); err != nil {
+	if err := validateAffected(cveFile.Affected); err != nil {
 		return errors.Wrap(err, "invalid affected field")
-	}
-
-	// Validate fixedIn.
-	if err := validateVersions(cveFile.FixedBy); err != nil {
-		return errors.Wrap(err, "invalid fixedIn field")
 	}
 
 	return nil
@@ -190,54 +185,44 @@ func validateCVSS3(score float64, vector string) error {
 	return nil
 }
 
-func validateVersionConstraints(constraints []string) error {
-	if len(constraints) == 0 {
-		return errors.New("constraints must be defined")
+func validateAffected(affects []AffectedSchema) error {
+	if len(affects) == 0 {
+		return errors.New("affected must be defined")
 	}
 
-	constraintSet := make(map[string]bool)
-	for _, constraint := range constraints {
-		trimmed := strings.TrimSpace(constraint)
-		if len(trimmed) == 0 {
-			return errors.New("constraints may not be blank")
+	affectedSet := make(map[string]bool)
+	for _, affected := range affects {
+		trimmedRange := strings.TrimSpace(affected.Range)
+		if len(trimmedRange) == 0 {
+			return errors.New("affected range must not be blank")
 		}
-		if constraintSet[trimmed] {
-			return errors.Errorf("constraints may not be repeated: %s", trimmed)
+		if affectedSet[trimmedRange] {
+			return errors.Errorf("affected range must not be repeated: %s", trimmedRange)
 		}
-		constraintSet[trimmed] = true
+		affectedSet[trimmedRange] = true
 
-		// It would be nice if we could ensure all constraints are non-overlapping,
+		// It would be nice if we could ensure all ranges are non-overlapping,
 		// but it doesn't seem very straightforward at the moment.
-		if _, err := version.NewConstraint(trimmed); err != nil {
-			return errors.Wrapf(err, "invalid constraint: %s", trimmed)
-		}
-	}
-
-	return nil
-}
-
-func validateVersions(versions []string) error {
-	if len(versions) == 0 {
-		return errors.New("versions must be defined")
-	}
-
-	var prev *version.Version
-	for _, str := range versions {
-		trimmed := strings.TrimSpace(str)
-		if len(trimmed) == 0 {
-			return errors.New("versions may not be blank")
-		}
-
-		v, err := version.NewVersion(trimmed)
+		c, err := version.NewConstraint(trimmedRange)
 		if err != nil {
-			return errors.Wrapf(err, "invalid version: %s", trimmed)
+			return errors.Wrapf(err, "invalid affected range: %s", trimmedRange)
 		}
 
-		if prev != nil && v.LessThanOrEqual(prev) {
-			return errors.Errorf("versions must be unique and sorted in increasing order: %s < %s", v.String(), prev.String())
+		trimmedFixedBy := strings.TrimSpace(affected.FixedBy)
+		if len(trimmedFixedBy) == 0 {
+			// fixedBy need not be defined.
+			continue
+		}
+		v, err := version.NewVersion(trimmedFixedBy)
+		if err != nil {
+			return errors.Wrapf(err,  "invalid fixedBy: %s", trimmedFixedBy)
 		}
 
-		prev = v
+		// It would be nice if we could ensure the version is above the range,
+		// but it doesn't seem very straightforward at the moment.
+		if c.Check(v) {
+			return errors.Errorf("fixedBy must not be within the given range: %s contains %s", trimmedRange, trimmedFixedBy)
+		}
 	}
 
 	return nil
