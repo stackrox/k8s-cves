@@ -215,7 +215,7 @@ func validateAffected(affects []AffectedSchema) error {
 		}
 		v, err := version.NewVersion(trimmedFixedBy)
 		if err != nil {
-			return errors.Wrapf(err,  "invalid fixedBy: %s", trimmedFixedBy)
+			return errors.Wrapf(err, "invalid fixedBy: %s", trimmedFixedBy)
 		}
 
 		// It would be nice if we could ensure the version is above the range,
