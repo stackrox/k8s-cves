@@ -2,14 +2,13 @@ package validation
 
 // CVESchema is the schema for the entire CVE file.
 type CVESchema struct {
-	CVE         string      `json:"cve"`
-	URL         string      `json:"url"`
-	IssueURL    string      `json:"issueUrl"`
-	Description string      `json:"description"`
-	Components  []string    `json:"components"`
-	CVSS        *CVSSSchema `json:"cvss"`
-	Affected    []string    `json:"affected"`
-	FixedIn     []string    `json:"fixedIn"`
+	CVE         string           `json:"cve"`
+	URL         string           `json:"url"`
+	IssueURL    string           `json:"issueUrl"`
+	Description string           `json:"description"`
+	Components  []string         `json:"components"`
+	CVSS        *CVSSSchema      `json:"cvss"`
+	Affected    []AffectedSchema `json:"affected"`
 }
 
 // CVSSSchema is the schema for the CVSS section of the CVE file.
@@ -30,4 +29,10 @@ type NVDSchema struct {
 type KubernetesSchema struct {
 	ScoreV3  float64 `json:"scoreV3"`
 	VectorV3 string  `json:"vectorV3"`
+}
+
+// AffectedSchema is the schema for the affected section of the CVE file.
+type AffectedSchema struct {
+	Range   string `json:"range"`
+	FixedBy string `json:"fixedBy"`
 }

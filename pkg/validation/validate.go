@@ -71,13 +71,8 @@ func Validate(fileName string, cveFile *CVESchema) error {
 	}
 
 	// Validate affected.
-	if err := validateVersionConstraints(cveFile.Affected); err != nil {
+	if err := validateAffected(cveFile.Affected); err != nil {
 		return errors.Wrap(err, "invalid affected field")
-	}
-
-	// Validate fixedIn.
-	if err := validateVersionConstraints(cveFile.FixedIn); err != nil {
-		return errors.Wrap(err, "invalid fixedIn field")
 	}
 
 	return nil
@@ -156,32 +151,6 @@ func validateCVSS(cvss *CVSSSchema) error {
 	return nil
 }
 
-func validateVersionConstraints(constraints []string) error {
-	if len(constraints) == 0 {
-		return errors.New("constraints must be defined")
-	}
-
-	constraintSet := make(map[string]bool)
-	for _, constraint := range constraints {
-		trimmed := strings.TrimSpace(constraint)
-		if len(trimmed) == 0 {
-			return errors.New("constraints may not be blank")
-		}
-		if constraintSet[trimmed] {
-			return errors.Errorf("constraints may not be repeated: %s", trimmed)
-		}
-		constraintSet[trimmed] = true
-
-		// It would be nice if we could ensure all constraints are non-overlapping,
-		// but it doesn't seem very straightforward at the moment.
-		if _, err := version.NewConstraint(trimmed); err != nil {
-			return errors.Wrapf(err, "invalid constraint: %s", constraint)
-		}
-	}
-
-	return nil
-}
-
 func validateCVSS2(score float64, vector string) error {
 	v, err := cvss2.VectorFromString(vector)
 	if err != nil {
@@ -211,6 +180,49 @@ func validateCVSS3(score float64, vector string) error {
 	calculatedScore := v.Score()
 	if score != calculatedScore {
 		return errors.Errorf("CVSS3 score differs from calculated vector score: %f != %0.1f", score, calculatedScore)
+	}
+
+	return nil
+}
+
+func validateAffected(affects []AffectedSchema) error {
+	if len(affects) == 0 {
+		return errors.New("affected must be defined")
+	}
+
+	affectedSet := make(map[string]bool)
+	for _, affected := range affects {
+		trimmedRange := strings.TrimSpace(affected.Range)
+		if len(trimmedRange) == 0 {
+			return errors.New("affected range must not be blank")
+		}
+		if affectedSet[trimmedRange] {
+			return errors.Errorf("affected range must not be repeated: %s", trimmedRange)
+		}
+		affectedSet[trimmedRange] = true
+
+		// It would be nice if we could ensure all ranges are non-overlapping,
+		// but it doesn't seem very straightforward at the moment.
+		c, err := version.NewConstraint(trimmedRange)
+		if err != nil {
+			return errors.Wrapf(err, "invalid affected range: %s", trimmedRange)
+		}
+
+		trimmedFixedBy := strings.TrimSpace(affected.FixedBy)
+		if len(trimmedFixedBy) == 0 {
+			// fixedBy need not be defined.
+			continue
+		}
+		v, err := version.NewVersion(trimmedFixedBy)
+		if err != nil {
+			return errors.Wrapf(err, "invalid fixedBy: %s", trimmedFixedBy)
+		}
+
+		// It would be nice if we could ensure the version is above the range,
+		// but it doesn't seem very straightforward at the moment.
+		if c.Check(v) {
+			return errors.Errorf("fixedBy must not be within the given range: %s contains %s", trimmedRange, trimmedFixedBy)
+		}
 	}
 
 	return nil
