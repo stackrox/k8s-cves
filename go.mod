@@ -1,6 +1,6 @@
 module github.com/stackrox/k8s-cves
 
-go 1.15
+go 1.16
 
 require (
 	github.com/facebookincubator/nvdtools v0.1.4
