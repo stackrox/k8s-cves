@@ -32,17 +32,16 @@ cvss:
     scoreV3: Kubernetes V3 score
     vectorV3: Kubernetes V3 vector
 affected:
-  # list of version constraints affected by the vulnerability.
+  # list of version constraints affected by the vulnerability
+  # with corresponding fix version, if it exists.
+  # ranges should be in order from oldest to newest.
+  #
   # Constraints adhere to https://github.com/hashicorp/go-version.
   # ex:
-  - "< 1.14.8"
-  - ">= 1.15.0, <= 1.15.4"
-  - "1.16.0"
-fixedIn:
-  # list of version constraints in which the vulnerability is fixed.
-  # Constraints adhere to https://github.com/hashicorp/go-version.
-  # ex:
-  - ">= 1.14.8, < 1.15"
-  - ">= 1.15.5, < 1.16"
-  - ">= 1.16.1"
+  - range: "< 1.14.8"
+    fixedBy: "1.14.8"
+  - range: ">= 1.15.0, <= 1.15.4"
+    fixedBy: "1.15.5"
+  - range: ">= 1.16, < 1.16.0"
+    fixedBy: "1.16.1"
 ```
