@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -29,7 +28,7 @@ func main() {
 			return errors.Errorf("CVE file must have .yaml extension: %s", path)
 		}
 
-		bytes, err := ioutil.ReadFile(path)
+		bytes, err := os.ReadFile(path)
 		if err != nil {
 			return err
 		}

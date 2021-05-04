@@ -79,29 +79,31 @@ func Validate(fileName string, cveFile *CVESchema) error {
 }
 
 func validateComponents(components []string) error {
-	if len(components) > 0 {
-		componentSet := make(map[string]bool)
-		for _, component := range components {
-			trimmed := strings.TrimSpace(component)
-			if len(trimmed) == 0 {
-				return errors.New("components may not be blank")
-			}
+	if len(components) == 0 {
+		return nil
+	}
 
-			if !validComponents[trimmed] {
-				validComponentsKeys := make([]string, 0, len(validComponents))
-				for componentKey := range validComponents {
-					validComponentsKeys = append(validComponentsKeys, componentKey)
-				}
-
-				return errors.Errorf("component is not valid (%v): %s", validComponentsKeys, trimmed)
-			}
-
-			if componentSet[trimmed] {
-				return errors.Errorf("components may not be repeated: %s", trimmed)
-			}
-
-			componentSet[trimmed] = true
+	componentSet := make(map[string]bool)
+	for _, component := range components {
+		trimmed := strings.TrimSpace(component)
+		if len(trimmed) == 0 {
+			return errors.New("components may not be blank")
 		}
+
+		if !validComponents[trimmed] {
+			validComponentsKeys := make([]string, 0, len(validComponents))
+			for componentKey := range validComponents {
+				validComponentsKeys = append(validComponentsKeys, componentKey)
+			}
+
+			return errors.Errorf("component is not valid (%v): %s", validComponentsKeys, trimmed)
+		}
+
+		if componentSet[trimmed] {
+			return errors.Errorf("components may not be repeated: %s", trimmed)
+		}
+
+		componentSet[trimmed] = true
 	}
 
 	return nil
