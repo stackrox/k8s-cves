@@ -3,6 +3,7 @@ package validation
 import (
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/facebookincubator/nvdtools/cvss2"
 	"github.com/facebookincubator/nvdtools/cvss3"
@@ -10,10 +11,20 @@ import (
 	"github.com/pkg/errors"
 )
 
+func init() {
+	var err error
+	firstPublishedCVE, err = time.Parse(TimeFormat, "2015-11-27")
+	if err != nil {
+		panic("Should not happen")
+	}
+}
+
 var (
 	cvePattern      = regexp.MustCompile(`^CVE-\d+-\d+$`)
 	urlPattern      = regexp.MustCompile(`^https?://`)
 	issueURLPattern = regexp.MustCompile(`^https://github.com/kubernetes/kubernetes/(?:issues|pull)/\d+$`)
+
+	firstPublishedCVE time.Time
 
 	validComponents = map[string]bool{
 		"client-go":               true,
@@ -53,6 +64,11 @@ func Validate(fileName string, cveFile *CVESchema) error {
 	// Validate Issue URL.
 	if cveFile.IssueURL != "" && !issueURLPattern.MatchString(cveFile.IssueURL) {
 		return errors.Errorf("issueURL must adhere to the pattern %q: %s", issueURLPattern.String(), cveFile.IssueURL)
+	}
+
+	// Validate published.
+	if cveFile.Published.Before(firstPublishedCVE) {
+		return errors.New("published time must be specified and of format 2006-01-02")
 	}
 
 	// Validate description.
