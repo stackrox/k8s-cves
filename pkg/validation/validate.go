@@ -1,13 +1,14 @@
 package validation
 
 import (
+	"regexp"
+	"strings"
+	"time"
+
 	"github.com/facebookincubator/nvdtools/cvss2"
 	"github.com/facebookincubator/nvdtools/cvss3"
 	"github.com/hashicorp/go-version"
 	"github.com/pkg/errors"
-	"regexp"
-	"strings"
-	"time"
 )
 
 func init() {
