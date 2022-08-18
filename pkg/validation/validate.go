@@ -13,7 +13,7 @@ import (
 
 func init() {
 	var err error
-	firstPublishedCVE, err = time.Parse(TimeFormat, "2015-11-27")
+	firstPublishedCVE, err = time.Parse(TimeLayout, "2015-11-27T00:00Z")
 	if err != nil {
 		panic("Should not happen")
 	}

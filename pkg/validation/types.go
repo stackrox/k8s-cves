@@ -1,8 +1,12 @@
 package validation
 
-import "time"
+import (
+	"time"
 
-const TimeFormat = "2006-01-02"
+	"github.com/facebookincubator/nvdtools/cvefeed/nvd/schema"
+)
+
+const TimeLayout = schema.TimeLayout
 
 // CVESchema is the schema for the entire CVE file.
 type CVESchema struct {
@@ -57,6 +61,6 @@ func (t *Time) UnmarshalJSON(data []byte) error {
 	}
 
 	var err error
-	t.Time, err = time.Parse(`"`+TimeFormat+`"`, string(data))
+	t.Time, err = time.Parse(`"`+TimeLayout+`"`, string(data))
 	return err
 }
