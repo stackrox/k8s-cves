@@ -178,7 +178,7 @@ func validateCVSS2(score float64, vector string) error {
 		return err
 	}
 
-	calculatedScore := v.Score()
+	calculatedScore := v.BaseScore()
 	if score != calculatedScore {
 		return errors.Errorf("CVSS2 score differs from calculated vector score: %f != %0.1f", score, calculatedScore)
 	}
@@ -195,7 +195,7 @@ func validateCVSS3(score float64, vector string) error {
 		return err
 	}
 
-	calculatedScore := v.Score()
+	calculatedScore := v.BaseScore()
 	if score != calculatedScore {
 		return errors.Errorf("CVSS3 score differs from calculated vector score: %f != %0.1f", score, calculatedScore)
 	}
